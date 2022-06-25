@@ -1,0 +1,477 @@
+---
+title: |
+  | \vspace{5cm} \LARGE Microsoft Sentiment Analysis
+subtitle: "Using Social Media and News Outlets to analyse sentiment on Microsoft before comparing with Stock Market"
+author: "Charlotte GALLET - Hina HUSSAIN - Muihan MA - Inderpreet RANA"
+date: |
+  | \vspace{8cm} 02/02/2022
+output: pdf_document
+always_allow_html: true
+header-includes:
+  - \usepackage{titling}
+  - \pretitle{\begin{center}
+    \includegraphics[width=2in,height=2in]{"C:/Users/cgallet/Downloads/IÉSEG_LOGO_MOTTO.jpg"}\LARGE\\}
+  - \posttitle{\end{center}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+\newpage 
+
+## Introduction 
+
+Microsoft Corporation is an American multinational technology corporation which produces computer software, consumer electronics, personal computers, and related services. The company has an online presence, and this report uses data from Microsoft’s Twitter presence, and new articles on Microsoft’s stock (MSFT) from NewYork Times API and Open Blender API. Social Media analytics techniques such as text mining, topic modelling, sentiment analysis (machine learning and dictionary approach) etc. were used to obtain the results for this report. 
+
+The main objective of this report is to profile Microsoft’s presence on Twitter and compare sentiments in news articles about MSFT to its stock market performance.  
+
+\newpage
+
+## Summary 
+
+```{r source, include=FALSE}
+source("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Markdown_Source.R", local = knitr::knit_global())
+```
+
+The data was extracted using the get_timeline function of rtweets package. The tweets were categorized into **original** (tweets made by Microsoft), **retweets** (tweets made by Microsoft by retweeting other users), and **replies** (replies made my Microsoft under their tweets). 
+
+Using the original tweets, the most liked and retweeted tweet of Microsoft were extracted. 
+
+```{r popular tweet, echo=FALSE}
+print(liked)
+print(retweeted)
+```
+
+*The most popular tweet of Microsoft shows that tweets prompting users to engage obtain more traction. Microsoft could achieve higher social media engagement by having polls on their tweets. This method allows users to feel part of the decision-making process behind their favourite products.*
+
+This graph shows the proportion of each type of tweet made by Microsoft. Replies make up the biggest proportion.
+
+```{r tweet_type, echo=FALSE}
+plot_ly(tweet_types,values=~Count,labels=~factor(Type),marker=list(colors=c("blue","yellow","purple")),type="pie") %>% layout(title="Types of Tweets by Microsoft") 
+```
+
+*This shows that Microsoft actively engages with its Twitter users. This is an excellent strategy to make the users feel heard. Microsoft can also benefit from posting original tweets to keep its Twitter profile active.* 
+
+This graph shows the number of tweets made by Microsoft over the past 6 months. The trend shows that the frequency has gone down over the past few months.  
+
+```{r tweets_month, echo=FALSE}
+ts_plot(ms, "month") + theme_minimal() 
+```
+This graph shows the source of tweets made by Microsoft. Majority of the tweets are made using Sprinklr Publishing. 
+
+```{r source_tweets, echo=FALSE}
+plot_ly(source_tweets,values=~count,labels=~factor(source),marker=list(colors=c("light blue","purple")),type="pie") %>% layout(title="Source of Tweets by Microsoft")
+```
+The words used most frequently by Microsoft were obtained. To accomplish this, the original tweets were cleaned by removing punctuation, symbols and numbers. Then the tweets were tokenized into words and stop words were removed. This plot shows the frequency of the top 10 most used words in Microsoft’s tweets. The frequency shows that the company mostly talks about its products and future projects. 
+
+```{r word_freq, echo=FALSE}
+plot_ly(wordfreq, x = ~freq, y = ~word, type = 'bar', orientation = 'h') %>% layout(title="Count of Most frequent Words in Microsoft's Tweets", xaxis = list(title = ""), yaxis = list(title =""))
+```
+
+This wordcloud shows the account names that Microsoft retweets the most.  Mainly the tweets of Microsoft’s CEO Satya Nadella and other sub accounts of Microsoft are retweeted the most by Microsoft. This shows that content wise, Microsoft does not retweet random news and keeps its content relevant. 
+
+```{r wordcloud, echo=FALSE}
+wordcloud(retweets$retweet_screen_name, min.freq=3, scale=c(3, 1), random.order=FALSE)
+```
+
+Topic modelling is run on all the tweets of Microsoft except for its replies. The text is first cleaned to remove punctuation, symbols etc. The English model from the **udpipe** package was used to get **POS Tags** for **nouns** and **adjectives**. The package helps to tokenize the tweets and then tag the nouns and adjectives. A **document term matrix** was then constructed, words with a frequency lower than 5 were removed, top 50 words were kept based on the mean term-frequency-inverse document frequency (**TFIDF**). The LDA model using the Gibbs method was applied to the resulting document term matrix to obtain the **topics** and the most **important topic per tweet**. 
+
+```{r summary_topic, echo=FALSE}
+top_tweet_terms %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() +
+  scale_x_reordered()
+
+```
+
+\newpage
+## Users 
+
+Part of understanding how Microsoft behaves on twitter also depends on the type of **users** that follow them, reply to them and mention them.  
+
+That is why in this part we will take a deeper look into who are the people that follow Microsoft. The analysis of Microsoft's followers will be based on the **descriptions** that each user has under its profile. This has allowed us to have a **wordcloud** where the most frequent term found is "Life". But we can also see some other types of categories such as gaming and professional life. 
+
+```{r follower_wordcloud, echo=FALSE}
+wordcloud(MSFT_Frequency$word, MSFT_Frequency$freq,
+          min.freq = 2, 
+          max.words=50,
+          scale=c(3,1))
+```
+We were also able to create a map, thanks to the **twittermap function** that we have downloaded from a website sourced in the code. This allows us to see where the main users of Microsoft come from. As you can see below, the majority of followers are from Asia, more specifically India. 
+
+```{r follower_map, echo=FALSE}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/0001.jpg")
+```
+
+We also thought it would be interesting to conduct **sentiment analysis** on the descriptions of the followers. Based of off this analysis, it was possible to find that most of the descriptions are **positive**. 
+
+```{r follower_sentiment, echo=FALSE}
+ggplot(MSFT_statusSentiment,
+       aes(x=sentiment), bins) + geom_histogram(bins=4, color = "white")
+```
+
+Some **topics** have also been created in a way to group all the descriptions into 8 topics. The first topic revolves around studying and technology. The second topic looks at **teams** and how it's possible to have some community work. The rest of the topics are also based on this two topics. 
+
+```{r follower_topics, echo=FALSE}
+MSFT_top_topics %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip() +
+  scale_x_reordered()
+```
+
+While collecting information regarding the followers, we have encountered some **challenges**. Indeed, we wanted to collect the information through a **loop**, however, it was not possible as there were too many IDs. That is why, the information collected had to be done through the twitter API, and the descriptions' analysis could be finished.  
+
+\newpage
+## Analysis of the tweets
+
+### Hashtag Microsoft 
+
+#### 1.	Word cloud based on the tibble and all text pre-processing   
+
+It is more related to the product, gaming and cybersecurity.
+
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture31.png")
+```
+
+#### 2. Bigram 
+
+As recently Microsoft announced FY22Q2 quarterly financial report, Azure, one of the products from Microsoft, is expected will be the top-selling product in the coming quarter, this explains why the bigram “Microsoft azure” on the bigram while most of the tweets are promotional tweets, which are hard to come up with useful bigram.
+News source: https://www.zdnet.com/article/microsoft-cloud-revenues-power-microsofts-51-7-billion-second-fy22-quarter/
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture32.png")
+```
+
+#### 3. Sentiment Analysis - Dictionary-based lookup method 
+
+By using the dictionary-based lookup method for sentiment analysis, the bar charts show the top 10 positive or negative words used in the tweets. 7 out of 10 of the negative words are related to the recent article published by Microsoft Azure for Azure protecting DDoS attacks. The result reflects that cybersecurity is still one of the top topics when related articles or news are published. Even though this topic brings lots of negative sentiment to the tweets that related to Microsoft, it increases more public attention for their product, Azure, which successfully defended the attacks.
+https://azure.microsoft.com/en-us/blog/azure-ddos-protection-2021-q3-and-q4-ddos-attack-trends/
+Before removing Microsoft products related keywords (e.g. cloud, excel)
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture33.png")
+```
+After removing Microsoft products related keywords (e.g. cloud, excel)
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture34.png")
+```
+
+By higher density and intensity for positive sentiment than the negative sentiment, it shows that the audiences have more positive feedback to Microsoft when they mention it.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture35.png")
+```
+
+#### 4. Topic Modeling 
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture36.png")
+```
+
+For topic 1 to 3, it is more related to cybersecurity, gaming and cloud service respectively.
+
+#### 5. Analysis on hashtag tweets
+a.	Top 10 most retweeted tweets
+
+As it is the most retweeted tweets by hashtagging Microsoft from their tweets, the content is more related to recent news or hit topics, like the topic for the top 3 tweets are the corporate acquisition for Microsoft, Sony & Nintendo, which are related to the recent news of the acquisition of Blizzard Activision, the second one is about the bond market in Austria compared to the stock price performance of Microsoft and the third one is about the cybersecurity.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture37.png")
+```
+
+b.	Top 10 most replied tweets
+
+It is more related to cybersecurity or the twitter user shared his or her work experience in Microsoft.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture38.png")
+```
+
+c.	Top 10 most liked tweets
+
+The most liked tweet is about twitter user sharing his or her work experience in Microsoft. 
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture39.png")
+```
+
+d.	Top 10 most quote tweets
+
+The most quote tweets are related to the bond market in Austria compared to the stock price performance of Microsoft, cybersecurity, and acquisition of Blizzard Activision, which is similar to the most retweet tweets.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture40.png")
+```
+
+e.	Tweets Frequency Per Date/Time
+
+The below graph, shows that more people are using “#Microsoft” around 16:00. However, as there is no location information for tweets, it is hard to have any conclusion for such a phenomenon.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture41.png")
+```
+
+f.	Top 10 Popular Hashtags using with #Microsoft
+
+This is how Twitter users related to Microsoft when they have “#Microsoft” in their tweets. It is more related to their products (Azure, Cloud, Microsoft flow), cybersecurity, and gaming.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture42.png")
+```
+
+#### 6.	Sentiment Analysis – Machine Learning Method
+
+There are 423 tweets manually labeled either 1 (positive tweets) or –1 (negative tweets) for classification of the sentiment group. Random forest is used for the machine learning of tweets
+
+However, the auc score is only 48.12%, therefore decided not to show the result as the model do not have enough data.
+
+### Tweets Timeline 
+
+#### 1. Wordcloud Based on the tibble and text pre-proccesing 
+
+It is more related to product and gaming. 
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture17.png")
+```
+
+#### 2. Bigram 
+
+As tweets timeline generates the tweets from Microsoft, it is more related to its products or words to ask the audiences to click to the links it provided for details, to bring traffic to their website.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture18.png")
+```
+
+#### 3. Sentiment Analysis - Dictionary-based lookup method 
+
+As these are the keywords from the tweets posted by the Official Microsoft Twitter Account, therefore the count for negative words is much less than positive words. It is a good approach that avoids using negative words in tweets so as to give a positive image to customers.
+Before removing Microsoft products related keywords (e.g. cloud, excel)
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture19.png")
+```
+After removing Microsoft products related keywords (e.g. cloud, excel)
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture20.png")
+```
+As this is the official Microsoft Twitter account, they usually used positive keywords in the content. From the graph, the positive sentiment has a much higher density and intensity than the negative sentiment.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture21.png")
+```
+
+#### 4. Topic Modeling 
+
+For topic 1 to 3, it is more related to gaming, cloud service and Microsoft teams respectively. 
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture22.png")
+```
+#### 5.	Analysis on tweets timeline
+a.	Tweets
+
+Among the top 10 tweets, 4 of them are related to gaming, it is not surprising that gaming tweets have more retweeted tweets, especially the first one is a lucky draw game held on Twitter, gamers are more involved in having a chance to win the prize. This can promote the gaming more efficiently as it brings traffic to the related game & Microsoft.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture23.png")
+```
+b.	Top 10 most replied tweets
+
+The graph shows that sometimes even saying “Hi” and asking questions bring the twitter more replies than other official announcement tweets (like new product or update announcement).
+It shows that this kind of tweets are more “human-like”, like a friend is chatting with other twitter users. And by asking questions, Microsoft can also bring the memories to the audiences, making them think of the good experiences by using their products. This can help Microsoft strengthen its image. Most importantly, Microsoft can have reaction with the audiences by replying to the tweets from the audiences.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture24.png")
+```
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture1.png")
+```
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture2.png")
+```
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture3.png")
+```
+
+c.	Top 10 most liked tweets
+
+Like the top 10 reply tweets, top 10 liked tweets show similar behavior. When the tweets is setting up some “like goal” and the topic brings memory to the audience, it brings lots of like and traffic to the account, as people will share this to others (refer to the most quote tweet) and making more people participate in this tweet. 
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture25.png")
+```
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture4.png")
+```
+d.	Top 10 most quote tweets
+
+For most quote tweets, it is more related to the tweets bring them memories, like the most reply tweets, this strategy can let the audience remember the good memories by using Microsoft’s product.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture26.png")
+```
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture27.png")
+```
+e.	Tweets Frequency Per Month
+
+On average, Microsoft publishes 300 to 500 tweets each month. It depends on any new products, updates, news or articles to share for that month.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture28.png")
+```
+f.	Top 10 Popular Hashtags using with #Microsoft
+
+The frequency of using hashtags is relatively low for the official Microsoft account, it is suggested that using more hashtags to relate its products. Moreover, sometimes it helps to bring the audiences to the tweets when they click on hashtags to find related tweets.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture29.png")
+```
+
+### Mentions Timeline 
+
+#### 1. Wordcloud based on the tibble and all text pre-processing
+
+It is more related to competitors of Microsoft or entrepreneurs.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture44.png")
+```
+
+#### 2.	Sentiment Analysis – Dictionary-based lookup method
+
+The following graphs show that when the audience mention Microsoft, they have relatively higher positive sentiment than negative sentiment.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture46.png")
+```
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture47.png")
+```
+
+By density and intensity of the sentiment graph below, it shows that they have more positive sentiment than negative ones. It represents that when other users mention Microsoft, they have more positive feelings towards Microsoft, which can conclude Microsoft has a relatively positive brand image to the audiences.
+
+```{r, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture48.png")
+```
+
+\newpage 
+## Deeper Analysis 
+
+**Predicting if the stock price will go up or down once the market opens based on historical stock data and news sentiment:
+We used aftermarket hours news and previous day’s close, high, low, volume, change and lag to predict the uptick or downtick in stock price when market opens.**
+
+1)	We extracted the news articles containing the word ‘microsoft’ from NY Times API.
+2)	The News articles are from 2020-01-02 till 2022-01-27.
+load("./data/allNYTSearch.RData")
+min(allNYTSearch$response.docs.pub_date)
+max(allNYTSearch$response.docs.pub_date)
+3)	We analyzed the top Article categories for Microsoft News:
+
+```{r inder1, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture6.png")
+```
+
+4)	We Did topic modeling on news articles to understand them better:
+
+```{r inder2, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture7.png")
+```
+
+5)	 We extracted the Microsoft stock data for the same time period as when the news articles were published using tinyquant library.
+6)	We further merged the news dataset with stock data based on article publish date and stock dates.
+7)	We can visualize the news vs. stock open price below:
+
+```{r inder3, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture8.png")
+```
+
+8)	We created a wordcloud of news articles to understand the common words and trends
+```{r inder4, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture9.png")
+```
+
+9)	We further did a dictionary based sentiment analysis of the news articles over time:
+```{r inder5, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture10.png")
+```
+
+10)	We finally removed the unwanted columns and processed the combined news and stock data to feed into our model:
+11)	Base Table Snapshot:
+```{r inder6, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture11.png")
+```
+
+12)	Our train data was news articles sentiment score and stock data before 2021-09-01
+13)	Our test data was news articles sentiment score and stock data after 2021-09-01
+14)	We used random forest model at the end (we also tried neural networks, logistic regression  , but found random forest to be the best performing model) with AUC of : 68.97%.
+```{r inder7, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture12.png")
+```
+
+
+**15)	Further evaluation of the model performance:**
+```{r inder8, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture13.png")
+```
+```{r inder9, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture14.png")
+```
+
+
+**16)	We can see from the confusion matrix above that the model can very well predict when the stock will fall and one need to short or buy based on the strategy**
+**17)	Below, we can see the actual vs predicted stock prices over time (red = actual, green = predicted)**
+```{r inder10, echo=FALSE, out.width = "400px"}
+knitr::include_graphics("C:/Users/cgallet/OneDrive - IESEG/MBD/Social Media Analytics/Group Project/Picture15.png")
+```
+
+
+
+\newpage 
+## Sources of data
+In order to extract all the information that allowed us to conduct some sentiment analysis, we used **various APIs** and **packages**.
+
+Some part of the information was collected through **twitter developer API** as well as the **rtweet package**. This enabled us to conduct the sentiment analysis on the tweets, the users and create a summary. 
+
+On the other hand, while creating the stock market analysis based on news, we were able to extract information from **New York Times API** as well as **Google API**. Concerning the stock themselves, the information was extracted thanks to the **openblender API**. 
+
+**API’s /Data Sources Used:**
+•	Open Blender – Used to test our concept
+  o	It has limited news articles for a free API account.
+  o	We used US Today and Wall Street articles and blended them with stock data using this API
+•	tinyquant – Used to extract stock data
+•	Bing Search API – Experimented with it, but free tier is limited to 1 month’s articles.
+•	NY Times API : Final data source for News articles– Used to extract historical news articles.
+
+### Overall Challenges & Difficulties:
+
+1) Some of the steps require a longer time or better spec of the computer when handling relatively more data, for instance, spell check and classification for 3 groups in machine learning (positive, neutral and negative), groupings are adjusted to accommodate the running time for the code. 
+
+2) For the machine learning approach for sentiment analysis, as there is no available data for sentiment groups, data have to be manually classified. This may result in inconsistent classification as we may have prejudice on tweets. It would be better if classification rules were set up.In addition, since positive tweets are way more than negative tweets we classified, we do not have enough data to feed the model, the AUC score is only 48.12%, it would be better if there are more tweets to be classified.
+
+3) For hashtag, as everyone twitter user can use the tag whenever they like, we observed that some of the tweets are with lots of hashtags just for the promotion of their service/product instead of linked with Microsoft.
+
+4) For the whole analysis, we have to understand the background of the target company thoroughly, especially for the recent news, in order to link the results we obtained from the tweets data to the news.
+
+
+
+
+
+
+

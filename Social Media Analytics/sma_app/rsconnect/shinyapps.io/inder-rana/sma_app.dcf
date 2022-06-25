@@ -1,0 +1,14 @@
+name: sma_app
+title: sma_app
+username:
+account: inder-rana
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5576412
+bundleId: 5540560
+url: https://inder-rana.shinyapps.io/sma_app/
+when: 1643929322.48695
+lastSyncTime: 1643929322.48695
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .RData|allNYTSearch.RData|base_table.Rdata|basetable.RData|DataGroupAssignment.Rdata|top_news_terms.RData|words_only.RData
